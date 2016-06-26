@@ -33,6 +33,9 @@ The following additional gems are installed as well:
 - ByeBug v9.0.5
 - Pry-Rails v0.3.4 (This pulls in Pry v0.10.3)
 - Capybara-Rails + DatabaseCleaner
+- Capistrano-Rails
+- Faker
+- SimpleCov (aka Simple Coverage. Gem to help you see how much of your code is covered by tests)
 
 ## Database Support
 
@@ -51,3 +54,5 @@ Debian and Ubuntu binary distributions repository (formerly [Chris Lea's](https:
 
 Support for this repository, along with its scripts, can be found on [GitHub](https://github.com) at 
 [nodesource/distributions](https://github.com/nodesource/distributions).
+
+
