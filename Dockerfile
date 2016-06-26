@@ -1,32 +1,29 @@
-# Ruby On Rails Base Image
+# Ruby On Rails Base Image - CyberSpace Technologies Group, LLC.
 #
-# VERSION		0.0.1
+# VERSION		0.0.3
 
 FROM rails:onbuild
 
 
-MAINTAINER D Deryl Downey <ddd@deryldowney.com>
+MAINTAINER D Deryl Downey "ddd@deryldowney.com"
 
+# Set the Description, Vendor, and Version number on the resulting image. NOTE: Increment Version and VERSION. Both are to match.
+LABEL Description="Built with Ruby On Rails 4.2.6 and Ruby 2.3.1p112 on Ubuntu Jessie. It's built from the official Rails docker image." \
+      Vendor="CyberSpace Technologies Group, LLC. [CSTG]" \
+      Version="0.0.3"
 
-# Describe the use for this image, the vendor, and the current version level
-LABEL Description="This image is used to set up Ruby On Rails 4.2.6 on Ubuntu using RVM & Ruby 2.3.1" Vendor="CSTG / D Deryl Downey" Version="0.0.1"
+# Set needed Environment variables here. Ex: ENV VAR value or ENV VAR=value
+ENV TERM=xterm
+ENV TTY=$(tty)
 
-# Set Environment here
-ENV TERM xterm
+# Update pkgs db, install primary toolsets, and then upgrade the distribution itself
+# NOTE: Dockerfile 'Best Practices' is to list pkgs being installed in alphabetical order
+RUN apt-get update && apt-get install -y apt-utils build-essential debian-keyring sudo && apt-get dist-upgrade -y
 
-# Let's start actually building now..
-# Ready? Set! Go!
+# Add non-privileged user for everything to run under. Make sure they are in the sudo group.
+RUN useradd -m -c "CSTG Default User" cstg -s /bin/bash && usermod -aG sudo cstg
 
-# Install primary tools needed then update and upgrade the distribution
-RUN apt-get update && apt-get install -y apt-utils dialog sudo build-essential debian-keyring && apt-get dist-upgrade -y
-
-# Pull in RVM's deployment gpg key and install RVM
-RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 && curl -sSL https://get.rvm.io | sudo bash -s stable
-
-# Let's add a user for everything to run under other than root, and make sure they are in the RVM and sudo groups.
-RUN useradd -m -c "CSTG Default User Account" cstg -s /bin/bash && usermod -aG rvm,sudo cstg
-
-# First, lets add Node.JS. We're using the NodeSource.Com PPA for this.
+# Add Node.JS v4.4 series using the NodeSource.Com PPA.
 RUN curl -sL https://deb.nodesource.com/setup_4.x | bash - && apt-get install -y nodejs
 
 # The WORKDIR instruction sets the working directory for any RUN, CMD, ENTRYPOINT, COPY and ADD 
@@ -34,18 +31,14 @@ RUN curl -sL https://deb.nodesource.com/setup_4.x | bash - && apt-get install -y
 # even if its not used in any subsequent Dockerfile instruction
 WORKDIR /usr/src/app
 
-# Check this command. Need to see if rvm.sh is already parsed. If it is, we don't need this.
-# Commented out until we are sure.
-RUN echo '. /etc/profile.d/rvm.sh' >> /home/cstg/.bash_profile
-
-# Now we add all supported database connection gems to the image
+# Now we add all CSTG-supported database connection gems to the image
 RUN gem install mysql pg sqlite3
 
 # Ensure proper permissions and ownership of all directories and files under WORKDIR
 RUN chown -R cstg:cstg .
 RUN find . -type f -exec chmod 644 {} \; && find . -type d -exec chmod 755 {} \;
 
-# Let's change to the CSTG user now. 
-# REMEMBER, ALL FURTHER COMMANDS REQUIRING ROOT PRIVS MUST BE PREFACED WITH 'sudo'
+# Tell people about the CSTG user 
+RUN echo "NOTICE: The non-privileged user in this image is 'cstg'"
 ONBUILD USER cstg
 
