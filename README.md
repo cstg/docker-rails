@@ -66,3 +66,7 @@ out of the box. All necessary headers, libraries, and associated gems are preins
   5 - You can now use your image as the basis for your own personal/private application builds.
  
 
+NOTE: The above steps assume you want to modify this for your own use. If you want to base off it, Step 2 should be changed to you creating your own Dockerfile
+      with its FROM set to ``FROM deryldowney/rails:latest`` or ``FROM deryldowney/rails:4.2.6`` and the remaining steps staying the same.
+
+
