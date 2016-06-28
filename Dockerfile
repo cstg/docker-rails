@@ -28,14 +28,19 @@ RUN apt-get update && apt-get install -y \
   git-flow \
   gnupg2 \
   less \
+  makepasswd \
   net-tools \
   openssh-server \
   sudo \
   traceroute \
   && apt-get dist-upgrade -y
 
-# Add non-privileged user for everything to run under. Make sure they are in the sudo group.
-RUN useradd -m -c "CSTG Default User" cstg -s /bin/bash && usermod -aG sudo,staff cstg
+# Add non-privileged user for everything to run under. Make sure they are in the sudo and staff groups.
+# Normally, one would chain as many RUN commands as possible. But since this one is creating
+# a user and setting a default password it's being kept to it's own line even though it generates
+# an additional image layer to do so.
+RUN useradd -m -p $(echo cstguser | makepasswd --clearfrom=- --crypt-md5 | cut -d ' ' -f4) -c "CSTG User" -s /bin/bash cstg \
+    && usermod -aG sudo,staff cstg
 
 # Add Node.JS v4.4 series using the NodeSource.Com PPA.
 RUN curl -sL https://deb.nodesource.com/setup_4.x | bash - && apt-get install -y nodejs
@@ -45,16 +50,18 @@ RUN curl -sL https://deb.nodesource.com/setup_4.x | bash - && apt-get install -y
 # even if its not used in any subsequent Dockerfile instruction
 WORKDIR /usr/src/app
 
-# Now we add all CSTG-supported database connection gems to the image
-RUN gem install mysql pg sqlite3
-
-# Ensure proper permissions and ownership of all directories and files under WORKDIR
-# Also, to cut down on the number of RUNs, clean out apt at the same time.
-RUN chown -R cstg:cstg . \
+# Now we add all CSTG-supported database connection gems to the image, we then
+# ensure proper permissions and ownership of all directories and files under WORKDIR
+# Also, to cut down on the number of RUNs, AND the size of the image, clean up apt.
+RUN  gem install mysql pg sqlite3 \
+  && chown -R cstg:cstg . \
   && find . -type f -exec chmod 644 {} \; \
   && find . -type d -exec chmod 755 {} \; \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* /var/cache/* /tmp/* /var/tmp/*
 
+# Pass on the default user for new images being created. Users of this Docker image will
+# have their own image(s), that are based off this one, preset to executing as 'cstg'.
+# They should start their images out with 'USER root' if they need to modify the system.
 ONBUILD USER cstg
 
